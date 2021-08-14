@@ -1,17 +1,110 @@
-import React from 'react';
-import ReactDOM from 'react-dom';
-import './index.css';
-import App from './App';
-import reportWebVitals from './reportWebVitals';
+const data = [
+  {
+    id: "node1",
+    type: "div",
+    className: "section1",
+    children: [
+      {
+        id: "node2",
+        type: "div",
+        className: "text",
+        children: [
+          {
+            id: "node3",
+            type: "span",
+            content: "说明文字",
+            onClick: () => {
+              console.log(123);
+            },
+          },
+          {
+            id: "node4",
+            type: "i",
+            className: "icon-font-example",
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: "node5",
+    type: "div",
+    className: "section1",
+    children: [
+      {
+        id: "node6",
+        type: "input",
+        className: "custom-input",
+      },
+    ],
+  },
+];
 
-ReactDOM.render(
-  <React.StrictMode>
-    <App />
-  </React.StrictMode>,
-  document.getElementById('root')
-);
+type virtualDomElement = {
+  id: string;
+  type: string;
+  className?: string;
+  content?: string;
+  onClick?: any;
+  children?: Array<virtualDomElement>;
+};
 
-// If you want to start measuring performance in your app, pass a function
-// to log results (for example: reportWebVitals(console.log))
-// or send to an analytics endpoint. Learn more: https://bit.ly/CRA-vitals
-reportWebVitals();
+function renderDom(
+  element: virtualDomElement | Array<virtualDomElement>,
+  container: HTMLElement
+): void {
+  if (!Array.isArray(element)) {
+    renderDom([element], container);
+    return;
+  }
+  //JSON转DOM
+  for (let el of element) {
+    let node = document.createElement(el.type);
+    node.id = el.id;
+    if (el.className) {
+      node.className = el.className;
+    }
+    if (el.content) {
+      node.textContent = el.content;
+    }
+    if (el.onClick) {
+      node.onclick = el.onClick;
+    }
+    if (el.children) {
+      renderDom(el.children, node);
+    }
+    container.append(node);
+  }
+}
+
+//移动节点
+function moveNode(tree: HTMLElement, source: string, target: string) {
+  let sourNode = tree.querySelector("#" + source);
+  let tarNode = tree.querySelector("#" + target);
+  if (sourNode && tarNode) {
+    let parent = sourNode.parentElement;
+    if (parent) {
+      parent.removeChild(sourNode);
+      tarNode.appendChild(sourNode);
+    }
+  }
+  return tree;
+}
+
+const sleep = (ms: number) => {
+  return new Promise((resolve) => {
+    setTimeout(resolve, ms);
+  });
+};
+
+export async function main() {
+  const root = document.getElementById("root");
+  if (!root) {
+    throw Error("root not found");
+  }
+  renderDom(data, root);
+  await sleep(1000);
+  moveNode(root, "node3", "node5");
+}
+
+main();
